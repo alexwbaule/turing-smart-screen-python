@@ -102,7 +102,7 @@ class LcdComm(ABC):
         logger.info(f'Read Size: {size} BufferSize: {len(byteBuffer)}')
 
         try:
-            sys.stdout.write("0x00\t{}\t{}\r\n".format(len(byteBuffer), ''.join(format(x, '02x') for x in byteBuffer)))
+            #sys.stdout.write("0x00\t{}\t{}\r\n".format(len(byteBuffer), ''.join(format(x, '02x') for x in byteBuffer)))
             self.lcd_serial.write(bytes(byteBuffer))
         except serial.serialutil.SerialTimeoutException:
             # We timed-out trying to write to our device, slow things down.
@@ -113,7 +113,7 @@ class LcdComm(ABC):
                 response = self.lcd_serial.read(size)
                 msg_size = len(response)
                 # self.lcd_serial.flushInput()
-                sys.stdout.write("0x01\t{}\t{}\r\n".format(msg_size, ''.join(format(x, '02x') for x in response)))
+                #sys.stdout.write("0x01\t{}\t{}\r\n".format(msg_size, ''.join(format(x, '02x') for x in response)))
                 logger.info("Received: [{}]".format(str(response, 'utf-8')))
             except serial.serialutil.SerialException:
                 # We timed-out trying to write to our device, slow things down.
@@ -217,7 +217,7 @@ class LcdComm(ABC):
         if background_image is None:
             # A text bitmap is created with max width/height by default : text with solid background
             text_image = Image.new(
-                'RGBA',
+                'RGB',
                 (self.get_width(), self.get_height()),
                 background_color
             )
@@ -272,7 +272,7 @@ class LcdComm(ABC):
 
         if background_image is None:
             # A bitmap is created with solid background
-            bar_image = Image.new('RGBA', (width, height), background_color)
+            bar_image = Image.new('RGB', (width, height), background_color)
         else:
             # A bitmap is created from provided background image
             bar_image = Image.open(background_image)
@@ -344,7 +344,7 @@ class LcdComm(ABC):
         #
         if background_image is None:
             # A bitmap is created with solid background
-            bar_image = Image.new('RGBA', (diameter, diameter), background_color)
+            bar_image = Image.new('RGB', (diameter, diameter), background_color)
         else:
             # A bitmap is created from provided background image
             bar_image = Image.open(background_image)

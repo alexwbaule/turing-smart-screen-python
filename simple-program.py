@@ -97,7 +97,7 @@ if __name__ == "__main__":
     lcd_comm.SetBackplateLedColor(led_color=(255, 255, 255))
 
     # Set orientation (screen starts in Portrait)
-    orientation = Orientation.LANDSCAPE
+    orientation = Orientation.PORTRAIT
     lcd_comm.SetOrientation(orientation=orientation)
 
     # Define background picture
