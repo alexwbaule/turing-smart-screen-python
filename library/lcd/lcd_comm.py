@@ -184,6 +184,8 @@ class LcdComm(ABC):
 
     def DisplayBitmap(self, bitmap_path: str, x: int = 0, y: int = 0, width: int = 0, height: int = 0):
         image = Image.open(bitmap_path)
+        print(image.mode)  # RGB
+        print(image.info)  # {'transparency': (254, 254, 254), 'dpi': (96, 96)}
         self.DisplayPILImage(image, x, y, width, height)
 
     def DisplayText(
@@ -193,8 +195,8 @@ class LcdComm(ABC):
             y: int = 0,
             font: str = "roboto-mono/RobotoMono-Regular.ttf",
             font_size: int = 20,
-            font_color: Tuple[int, int, int] = (0, 0, 0),
-            background_color: Tuple[int, int, int] = (255, 255, 255),
+            font_color: Tuple[int, int, int, int] = (0, 0, 0, 0),
+            background_color: Tuple[int, int, int, int] = (255, 255, 255, 255),
             background_image: str = None,
             align: str = 'left'
     ):
@@ -217,7 +219,7 @@ class LcdComm(ABC):
         if background_image is None:
             # A text bitmap is created with max width/height by default : text with solid background
             text_image = Image.new(
-                'RGB',
+                'RGBA',
                 (self.get_width(), self.get_height()),
                 background_color
             )
@@ -244,7 +246,7 @@ class LcdComm(ABC):
 
     def DisplayProgressBar(self, x: int, y: int, width: int, height: int, min_value: int = 0, max_value: int = 100,
                            value: int = 50,
-                           bar_color: Tuple[int, int, int] = (0, 0, 0),
+                           bar_color: Tuple[int, int, int, int] = (0, 0, 0, 0),
                            bar_outline: bool = True,
                            background_color: Tuple[int, int, int] = (255, 255, 255),
                            background_image: str = None):
