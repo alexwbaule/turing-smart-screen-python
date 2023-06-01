@@ -26,6 +26,8 @@ from functools import wraps
 
 import library.config as config
 import library.stats as stats
+from library.log import logger
+
 
 STOPPING = False
 
@@ -158,7 +160,8 @@ def QueueHandler():
             f(*args)
     else:
         # Execute first action in the queue
-        f, args = config.update_queue.get()
+        s = config.update_queue.get()
+        f, args = s[0], (s[1], s[2])
         if f:
             f(*args)
 
