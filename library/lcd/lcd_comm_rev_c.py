@@ -294,6 +294,12 @@ class LcdCommRevC(LcdComm):
         if not image_width:
             image_width = image.size[0]
 
+        print(image.mode)  # RGB
+        print(image.info)  # {'transparency': (254, 254, 254), 'dpi': (96, 96)}
+        if image.info == {}:
+            print("Appending info...")
+            image.info = {'gamma': 0.45455, 'dpi': (96, 96)}
+        print(image.palette)
         logger.info(
             "Call DisplayPILImage {} {} {} {}={} {}={}".format(image, x, y, image_width, self.get_width(), image_height,
                                                                self.get_height()))
@@ -326,12 +332,6 @@ class LcdCommRevC(LcdComm):
 
         # logger.info("Calling DisplayPILImage {} {} {} {}={} {}={}".format(image, x, y, image_width, device_width, image_height, device_height))
 
-
-
-        #opencvImage = cv2.cvtColor(numpy.array(image), cv2.COLOR_RGB2BGR)
-        opencvImage = image
-
-
         if x == 0 and y == 0:
             logger.info("Call DisplayPILImage DISPLAY_BITMAP x={} y={} width={} height={}".format(x, y, image_width, image_height))
             image.save("images/DISPLAY_BITMAP-{}-{}-{}-{}.png".format(x, y, image_width, image_height))
@@ -341,7 +341,7 @@ class LcdCommRevC(LcdComm):
                 self.SendCommand(Command.PRE_UPDATE_BITMAP, bypass_queue=False)
                 self.SendCommand(Command.START_DISPLAY_BITMAP, padding=Padding.START_DISPLAY_BITMAP, bypass_queue=False)
                 self.SendCommand(Command.DISPLAY_BITMAP, bypass_queue=False)
-                self.SendCommand(Command.SEND_PAYLOAD, payload=bytearray(_generateFullImage(opencvImage)), bypass_queue=False, readsize=1024)
+                self.SendCommand(Command.SEND_PAYLOAD, payload=bytearray(_generateFullImage(image)), bypass_queue=False, readsize=1024)
                 self.SendCommand(Command.QUERY_STATUS, bypass_queue=False, readsize=1024)
         else:
             logger.info("Call DisplayPILImage UPDATE_BITMAP x={} y={} width={} height={}".format(x, y, image_width, image_height))
@@ -349,7 +349,7 @@ class LcdCommRevC(LcdComm):
             #cv2.imwrite("images-cv2/UPDATE_BITMAP-{}-{}-{}-{}-{}.png".format(Count.Start, 30, 50, image_width, image_height), opencvImage)
             with self.update_queue_mutex:
 
-                img, pyd = _generateUpdateImage(opencvImage, x, y, Count.Start, Command.UPDATE_BITMAP)
+                img, pyd = _generateUpdateImage(image, x, y, Count.Start, Command.UPDATE_BITMAP)
                 self.SendCommand(Command.SEND_PAYLOAD, payload=pyd, bypass_queue=False)
                 self.SendCommand(Command.SEND_PAYLOAD, payload=img, bypass_queue=False)
                 self.SendCommand(Command.QUERY_STATUS, bypass_queue=False, readsize=1024)
@@ -358,15 +358,26 @@ class LcdCommRevC(LcdComm):
 
 
 def _generateFullImage(image):
-    #if image.shape[2] < 4:
-    #    print("Fix Colors...")
-    #    image = cv2.cvtColor(image, cv2.COLOR_BGR2BGRA)
-    image = bytearray(numpy.array(image))
+    #convert color
+    image = cv2.cvtColor(numpy.array(image), cv2.COLOR_RGB2BGRA)
+
+    #image = numpy.array(image)
+    #image = image[:, :, ::-1]
+
+
+    image = bytearray(image)
+    #image = bytearray(numpy.array(image))
+
     image = b'\x00'.join(image[i:i + 249] for i in range(0, len(image), 249))
     return image
 
 
 def _generateUpdateImage(image, x, y, count, cmd: Command = None):
+    #convert color
+    image = cv2.cvtColor(numpy.array(image), cv2.COLOR_RGB2BGRA)
+
+    cv2.imwrite("images-cv2/UPDATE_BITMAP-{}-{}-{}-{}-{}.png".format(Count.Start, 30, 50, image.shape[1], image.shape[0]), image)
+
     width = image.shape[1]
     height = image.shape[0]
     payload = bytearray()
@@ -391,3 +402,49 @@ def _generateUpdateImage(image, x, y, count, cmd: Command = None):
     image_msg += 'ef69'
 
     return bytearray.fromhex(image_msg), payload
+
+'''
+def _generateUpdateImage(image, x, y, count, cmd: Command = None):
+    #convert color
+    image = cv2.cvtColor(numpy.array(image), cv2.COLOR_RGB2BGRA)
+
+    cv2.imwrite("images-cv2/UPDATE_BITMAP-{}-{}-{}-{}-{}.png".format(Count.Start, 30, 50, image.shape[1], image.shape[0]), image)
+
+    dimensions = image.shape
+
+    # height, width, number of channels in image
+    height = image.shape[0]
+    width = image.shape[1]
+    channels = image.shape[2]
+
+    print('Image Dimension    : ', dimensions)
+    print('Image Height       : ', height)
+    print('Image Width        : ', width)
+    print('Number of Channels : ', channels)
+
+
+    width = image.shape[0]
+    height = image.shape[1]
+    payload = bytearray()
+
+    image_msg = ''
+    for h in range(height):
+        image_msg += f'{((y + h) * 800) + x:06x}' + f'{width:04x}'
+        for w in range(width):
+            # #logger.info("h: {} - w: {}".format(h, w))
+            image_msg += f'{image[w][h][0]:02x}' + f'{image[w][h][1]:02x}' + f'{image[w][h][2]:02x}'
+
+    image_size = f'{int((len(image_msg) / 2) + 2):04x}'  # The +2 is for the "ef69" that will be added later.
+
+    logger.info("Render Count: {}".format(count))
+    payload.extend(cmd.value)
+    payload.extend(bytearray.fromhex(image_size))
+    payload.extend(Padding.NULL.value * 3)
+    payload.extend(count.to_bytes(4, 'big'))
+
+    if len(image_msg) > 500:
+        image_msg = '00'.join(image_msg[i:i + 498] for i in range(0, len(image_msg), 498))
+    image_msg += 'ef69'
+
+    return bytearray.fromhex(image_msg), payload
+'''

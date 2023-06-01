@@ -184,8 +184,6 @@ class LcdComm(ABC):
 
     def DisplayBitmap(self, bitmap_path: str, x: int = 0, y: int = 0, width: int = 0, height: int = 0):
         image = Image.open(bitmap_path)
-        print(image.mode)  # RGB
-        print(image.info)  # {'transparency': (254, 254, 254), 'dpi': (96, 96)}
         self.DisplayPILImage(image, x, y, width, height)
 
     def DisplayText(
@@ -195,8 +193,8 @@ class LcdComm(ABC):
             y: int = 0,
             font: str = "roboto-mono/RobotoMono-Regular.ttf",
             font_size: int = 20,
-            font_color: Tuple[int, int, int, int] = (0, 0, 0, 0),
-            background_color: Tuple[int, int, int, int] = (255, 255, 255, 255),
+            font_color: Tuple[int, int, int] = (0, 0, 0),
+            background_color: Tuple[int, int, int] = (255, 255, 255),
             background_image: str = None,
             align: str = 'left'
     ):
@@ -219,7 +217,7 @@ class LcdComm(ABC):
         if background_image is None:
             # A text bitmap is created with max width/height by default : text with solid background
             text_image = Image.new(
-                'RGBA',
+                'RGB',
                 (self.get_width(), self.get_height()),
                 background_color
             )
@@ -236,6 +234,8 @@ class LcdComm(ABC):
         d.text((x - left, y - top), text, font=font, fill=font_color, align=align)
 
         # Crop text bitmap to keep only the text (also crop if text overflows display)
+
+        text_image.save("images/DisplayText-x{}-y{}.png".format(x, y))
         text_image = text_image.crop(box=(
             x, y,
             min(x + text_width - left, self.get_width()),
@@ -246,7 +246,7 @@ class LcdComm(ABC):
 
     def DisplayProgressBar(self, x: int, y: int, width: int, height: int, min_value: int = 0, max_value: int = 100,
                            value: int = 50,
-                           bar_color: Tuple[int, int, int, int] = (0, 0, 0, 0),
+                           bar_color: Tuple[int, int, int] = (0, 0, 0),
                            bar_outline: bool = True,
                            background_color: Tuple[int, int, int] = (255, 255, 255),
                            background_image: str = None):
@@ -279,19 +279,21 @@ class LcdComm(ABC):
             # A bitmap is created from provided background image
             bar_image = Image.open(background_image)
 
-            # Crop bitmap to keep only the progress bar background
-            bar_image = bar_image.crop(box=(x, y, x + width, y + height))
-
         # Draw progress bar
         bar_filled_width = (value / (max_value - min_value) * width) - 1
         if bar_filled_width < 0:
             bar_filled_width = 0
         draw = ImageDraw.Draw(bar_image)
-        draw.rectangle([0, 0, bar_filled_width, height - 1], fill=bar_color, outline=bar_color)
+        draw.rectangle([x, y, bar_filled_width, height - 1], fill=bar_color, outline=bar_color)
 
         if bar_outline:
             # Draw outline
-            draw.rectangle([0, 0, width - 1, height - 1], fill=None, outline=bar_color)
+            draw.rectangle([x, y, width - 1, height - 1], fill=None, outline=bar_color)
+
+        bar_image.save("images/DisplayProgressBar-x{}-y{}.png".format(x, y))
+
+        # Crop bitmap to keep only the progress bar background
+        bar_image = bar_image.crop(box=(x, y, x + width, y + height))
 
         self.DisplayPILImage(bar_image, x, y)
 
@@ -351,8 +353,7 @@ class LcdComm(ABC):
             # A bitmap is created from provided background image
             bar_image = Image.open(background_image)
 
-            # Crop bitmap to keep only the progress bar background
-            bar_image = bar_image.crop(box=bbox)
+
 
         # Draw progress bar
         pct = (value - min_value)/(max_value - min_value)
@@ -439,5 +440,10 @@ class LcdComm(ABC):
             w, h = right - left, bottom - top
             draw.text((radius - w / 2, radius - top - h / 2), text,
                       font=font, fill=font_color)
+
+
+        bar_image.save("images/DisplayRadialProgressBar-x{}-y{}.png".format(xc, yc))
+        # Crop bitmap to keep only the progress bar background
+        bar_image = bar_image.crop(box=bbox)
 
         self.DisplayPILImage(bar_image, xc - radius, yc - radius)

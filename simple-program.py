@@ -114,26 +114,26 @@ if __name__ == "__main__":
     lcd_comm.DisplayBitmap(background)
 
     # Display sample text
-    lcd_comm.DisplayText("Basic text", 1, 1, background_color=(255, 0, 0), font_size=40)
+    lcd_comm.DisplayText("Basic text", 0, 200, font_size=40, background_image=background)
 
 
     # Display custom text with solid background
     lcd_comm.DisplayText("Custom italic multiline text\nright-aligned", 5, 500,
                          font="roboto/Roboto-Italic.ttf",
                          font_size=20,
-                         font_color=(0, 0, 255, 0),
-                         background_color=(255, 255, 255, 0),
+                         font_color=(0, 0, 255),
+                         background_color=(255, 255, 255),
                          align='right')
 
     # Display custom text with transparent background
     lcd_comm.DisplayText("Transparent bold text", 5, 250,
                          font="geforce/GeForce-Bold.ttf",
                          font_size=30,
-                         font_color=(255, 255, 255, 255),
-                         background_color=(0, 0, 0, 0))
-    exit(1)
+                         font_color=(0, 0, 0),
+                         background_image=background)
+
     # Display the current time and some progress bars as fast as possible
-    bar_value = 0
+    bar_value = 60
     while not stop:
         lcd_comm.DisplayText(str(datetime.now().time()), 160, 2,
                              font="roboto/Roboto-Bold.ttf",
@@ -150,7 +150,7 @@ if __name__ == "__main__":
         lcd_comm.DisplayProgressBar(160, 40,
                                     width=140, height=30,
                                     min_value=0, max_value=19, value=bar_value % 20,
-                                    bar_color=(0, 255, 0), bar_outline=False,
+                                    bar_color=(0, 255, 0), bar_outline=True,
                                     background_image=background)
 
         lcd_comm.DisplayRadialProgressBar(98, 320, 25, 4,
@@ -179,6 +179,7 @@ if __name__ == "__main__":
                                           background_image=background)
 
         bar_value = (bar_value + 2) % 101
+        break
 
     # Close serial connection at exit
     lcd_comm.closeSerial()
