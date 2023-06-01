@@ -27,17 +27,18 @@ from datetime import datetime
 # Import only the modules for LCD communication
 from library.lcd.lcd_comm_rev_a import LcdCommRevA, Orientation
 from library.lcd.lcd_comm_rev_b import LcdCommRevB
+from library.lcd.lcd_comm_rev_c import LcdCommRevC
 from library.lcd.lcd_simulated import LcdSimulated
 from library.log import logger
 
 # Set your COM port e.g. COM3 for Windows, /dev/ttyACM0 for Linux, etc. or "AUTO" for auto-discovery
 # COM_PORT = "/dev/ttyACM0"
 # COM_PORT = "COM5"
-COM_PORT = "AUTO"
+COM_PORT = "/dev/ttyACM0"
 
 # Display revision: A or B (for "flagship" version, use B) or SIMU for simulated LCD (image written in screencap.png)
 # To identify your revision: https://github.com/mathoudebine/turing-smart-screen-python/wiki/Hardware-revisions
-REVISION = "A"
+REVISION = "C"
 
 stop = False
 
@@ -67,6 +68,11 @@ if __name__ == "__main__":
         lcd_comm = LcdCommRevB(com_port=COM_PORT,
                                display_width=320,
                                display_height=480)
+    elif REVISION == "C":
+        print("Selected Hardware Revision B (XuanFang screen version B / flagship)")
+        lcd_comm = LcdCommRevC(com_port=COM_PORT,
+                               display_width=480,
+                               display_height=800)
     elif REVISION == "SIMU":
         print("Selected Simulated LCD")
         lcd_comm = LcdSimulated(display_width=320,
@@ -91,14 +97,18 @@ if __name__ == "__main__":
     lcd_comm.SetBackplateLedColor(led_color=(255, 255, 255))
 
     # Set orientation (screen starts in Portrait)
-    orientation = Orientation.PORTRAIT
+    orientation = Orientation.LANDSCAPE
     lcd_comm.SetOrientation(orientation=orientation)
 
     # Define background picture
     if orientation == Orientation.PORTRAIT or orientation == orientation.REVERSE_PORTRAIT:
         background = "res/backgrounds/example.png"
+        if REVISION == "C":
+            background = "res/backgrounds/example_800.png"
     else:
         background = "res/backgrounds/example_landscape.png"
+        if REVISION == "C":
+            background = "res/backgrounds/example_landscape_800.png"
 
     # Display sample picture
     lcd_comm.DisplayBitmap(background)
